@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>研究室 勤怠管理システム</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Lab Attendance</h1>
+    
+    <div class="input-group">
+      <label for="member-select">名前を選択してください</label>
+      <select id="member-select">
+        <option value="" disabled selected>名前を選択...</option>
+        <option value="教授">教授</option>
+        <option value="Aさん (M2)">Aさん (M2)</option>
+        <option value="Bさん (M1)">Bさん (M1)</option>
+        <option value="Cさん (B4)">Cさん (B4)</option>
+        </select>
+    </div>
+
+    <div class="button-group">
+      <button class="btn btn-in" onclick="recordAttendance('出勤')">出勤</button>
+      <button class="btn btn-out" onclick="recordAttendance('退勤')">退勤</button>
+      <button class="btn btn-leave" onclick="recordAttendance('一時退出')">一時退出</button>
+    </div>
+
+    <div id="loading" class="hidden">通信中...</div>
+    <div id="message" class="message"></div>
+
+    <div class="history-section">
+      <h2>最新の打刻履歴</h2>
+      <ul id="history-list">
+        <li>読み込み中...</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
