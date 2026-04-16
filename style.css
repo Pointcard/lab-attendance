@@ -126,3 +126,33 @@ select {
   font-size: 0.75rem;
   font-weight: bold;
 }
+
+.status-dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.status-box {
+  background: #f1f5f9;
+  padding: 10px;
+  border-radius: 8px;
+  min-height: 80px;
+}
+.status-box h3 {
+  margin: 0 0 8px 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+.member-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.member-tag {
+  background: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
