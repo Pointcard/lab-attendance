@@ -3,28 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>研究室 勤怠管理システム</title>
+  <title>研究室 勤怠管理</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <h1>Lab Attendance</h1>
     
+    <div class="status-dashboard">
+      <div class="status-box">
+        <h3>研究室内 (<span id="count-present">0</span>)</h3>
+        <div id="list-present" class="member-list"></div>
+      </div>
+      <div class="status-box">
+        <h3>一時退出中 (<span id="count-temp">0</span>)</h3>
+        <div id="list-temp" class="member-list"></div>
+      </div>
+    </div>
+
     <div class="input-group">
-      <label for="member-select">名前を選択してください</label>
+      <label for="member-select">名前を選択</label>
       <select id="member-select">
-        <option value="" disabled selected>名前を選択...</option>
+        <option value="" disabled selected>選択してください...</option>
         <option value="教授">教授</option>
         <option value="Aさん (M2)">Aさん (M2)</option>
         <option value="Bさん (M1)">Bさん (M1)</option>
         <option value="Cさん (B4)">Cさん (B4)</option>
-        </select>
+      </select>
     </div>
 
     <div class="button-group">
       <button class="btn btn-in" onclick="recordAttendance('出勤')">出勤</button>
       <button class="btn btn-out" onclick="recordAttendance('退勤')">退勤</button>
-      <button class="btn btn-leave" onclick="recordAttendance('一時退出')">一時退出/復帰</button>
+      <button class="btn btn-leave" id="btn-leave" onclick="recordAttendance('一時退出')">一時退出</button>
     </div>
 
     <div id="loading" class="hidden">通信中...</div>
@@ -38,16 +49,6 @@
     </div>
   </div>
 
-  <div class="status-dashboard">
-  <div class="status-box">
-    <h3>研究室内 (<span id="count-present">0</span>名)</h3>
-    <ul id="list-present" class="member-list"></ul>
-  </div>
-  <div class="status-box">
-    <h3>一時退出中 (<span id="count-temp">0</span>名)</h3>
-    <ul id="list-temp" class="member-list"></ul>
-  </div>
-</div>
-</div>
+  <script src="script.js"></script>
 </body>
 </html>
