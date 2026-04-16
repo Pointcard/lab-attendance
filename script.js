@@ -1,120 +1,15 @@
-// ★ ここにGASデプロイ時にコピーしたURLを貼り付けます
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbz_byv2YEj7XRxCi5hOUjNwq_Bk6Ez-RtFUUdSh739Jg0L-paHDuhwM0k5W0c-e7mB0/exec';
+const GAS_URL = 'ここにGASのウェブアプリURLを貼り付け';
 
-// ページ読み込み時に履歴を取得
-window.onload = () => {
-  fetchHistory();
-};
+let currentAllStatus = {}; // 全員の最新状態を保持
 
-async function recordAttendance(status) {
-  const nameSelect = document.getElementById('member-select');
-  const name = nameSelect.value;
-  
-  if (!name) {
-    showMessage('名前を選択してください', 'error');
-    return;
-  }
-
-  setLoading(true);
-  
-  const payload = {
-    name: name,
-    status: status
-  };
-
-  try {
-    // GASへPOSTリクエスト（打刻）
-    const response = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-      // GASのCORS制約を回避するため、あえてContent-Typeヘッダーは設定しません
-    });
-
-    const result = await response.json();
-    
-    if (result.success) {
-      showMessage(`${name}さん、${status}を記録しました`, 'success');
-      // 成功したら履歴を再取得して表示を更新
-      fetchHistory();
-    } else {
-      showMessage('エラーが発生しました', 'error');
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    showMessage('通信エラーが発生しました', 'error');
-  } finally {
-    setLoading(false);
-  }
-}
-
-async function fetchHistory() {
-  const historyList = document.getElementById('history-list');
-  
-  try {
-    // GASへGETリクエスト（履歴取得）
-    const response = await fetch(GAS_URL);
-    const data = await response.json();
-    
-    historyList.innerHTML = ''; // クリア
-    
-    if (data.length === 0) {
-      historyList.innerHTML = '<li>履歴がありません</li>';
-      return;
-    }
-
-    data.forEach(item => {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <span>${item.time} - ${item.name}</span>
-        <span class="status-badge" style="color: ${getStatusColor(item.status)}">${item.status}</span>
-      `;
-      historyList.appendChild(li);
-    });
-
-  } catch (error) {
-    console.error('Fetch History Error:', error);
-    historyList.innerHTML = '<li>履歴の取得に失敗しました</li>';
-  }
-}
-
-function getStatusColor(status) {
-  switch(status) {
-    case '出勤': return '#10b981';
-    case '退勤': return '#ef4444';
-    case '一時退出': return '#f59e0b';
-    default: return '#334155';
-  }
-}
-
-function showMessage(text, type) {
-  const msgEl = document.getElementById('message');
-  msgEl.textContent = text;
-  msgEl.className = `message ${type}`;
-  // 5秒後にメッセージを消す
-  setTimeout(() => { msgEl.textContent = ''; }, 5000);
-}
-
-function setLoading(isLoading) {
-  const buttons = document.querySelectorAll('.btn');
-  const loadingEl = document.getElementById('loading');
-  
-  buttons.forEach(btn => btn.disabled = isLoading);
-  if (isLoading) {
-    loadingEl.classList.remove('hidden');
-  } else {
-    loadingEl.classList.add('hidden');
-  }
-}
-
-
-let currentAllStatus = {}; // 全員の現在のステータスを保持
+window.onload = () => { fetchHistory(); };
 
 async function recordAttendance(status) {
   const nameSelect = document.getElementById('member-select');
   const name = nameSelect.value;
   if (!name) { showMessage('名前を選択してください', 'error'); return; }
 
-  // 「一時退出」ボタンが押されたとき、既に一時退出中なら「戻り」として送信
+  // 一時退出中なら「戻り」として送信
   let finalStatus = status;
   if (status === '一時退出' && currentAllStatus[name] === '一時退出') {
     finalStatus = '戻り';
@@ -129,10 +24,11 @@ async function recordAttendance(status) {
     const result = await response.json();
     if (result.success) {
       showMessage(`${name}さん、${finalStatus}を記録しました`, 'success');
-      fetchHistory(); // 画面更新
+      nameSelect.selectedIndex = 0; // 選択をリセット
+      await fetchHistory();
     }
-  } catch (error) {
-    showMessage('エラーが発生しました', 'error');
+  } catch (e) {
+    showMessage('通信エラーが発生しました', 'error');
   } finally {
     setLoading(false);
   }
@@ -142,14 +38,13 @@ async function fetchHistory() {
   try {
     const response = await fetch(GAS_URL);
     const data = await response.json();
-    
-    currentAllStatus = data.allStatus; // 状態を保存
+    currentAllStatus = data.allStatus;
 
-    // ダッシュボードの更新
-    updateDashboard('list-present', 'count-present', data.present);
-    updateDashboard('list-temp', 'count-temp', data.tempOut);
+    // ダッシュボード更新
+    updateList('list-present', 'count-present', data.present);
+    updateList('list-temp', 'count-temp', data.tempOut);
 
-    // 履歴の更新（直近3件）
+    // 履歴更新（最新3件）
     const historyList = document.getElementById('history-list');
     historyList.innerHTML = '';
     data.history.forEach(item => {
@@ -157,11 +52,29 @@ async function fetchHistory() {
       li.innerHTML = `<span>${item.time} ${item.name}</span><span class="status-badge" style="color:${getStatusColor(item.status)}">${item.status}</span>`;
       historyList.appendChild(li);
     });
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error('取得エラー:', e); }
 }
 
-function updateDashboard(listId, countId, members) {
+function updateList(listId, countId, members) {
   const listEl = document.getElementById(listId);
   document.getElementById(countId).textContent = members.length;
-  listEl.innerHTML = members.map(m => `<li>${m}</li>`).join('');
+  listEl.innerHTML = members.map(m => `<div class="member-item">${m}</div>`).join('');
+}
+
+function getStatusColor(s) {
+  if (s === '出勤' || s === '戻り') return '#10b981';
+  if (s === '退勤') return '#ef4444';
+  if (s === '一時退出') return '#f59e0b';
+  return '#334155';
+}
+
+function showMessage(t, type) {
+  const el = document.getElementById('message');
+  el.textContent = t; el.className = `message ${type}`;
+  setTimeout(() => { el.textContent = ''; }, 4000);
+}
+
+function setLoading(b) {
+  document.querySelectorAll('.btn').forEach(btn => btn.disabled = b);
+  document.getElementById('loading').className = b ? '' : 'hidden';
 }
