@@ -105,3 +105,63 @@ function setLoading(isLoading) {
     loadingEl.classList.add('hidden');
   }
 }
+
+
+let currentAllStatus = {}; // 全員の現在のステータスを保持
+
+async function recordAttendance(status) {
+  const nameSelect = document.getElementById('member-select');
+  const name = nameSelect.value;
+  if (!name) { showMessage('名前を選択してください', 'error'); return; }
+
+  // 「一時退出」ボタンが押されたとき、既に一時退出中なら「戻り」として送信
+  let finalStatus = status;
+  if (status === '一時退出' && currentAllStatus[name] === '一時退出') {
+    finalStatus = '戻り';
+  }
+
+  setLoading(true);
+  try {
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ name: name, status: finalStatus })
+    });
+    const result = await response.json();
+    if (result.success) {
+      showMessage(`${name}さん、${finalStatus}を記録しました`, 'success');
+      fetchHistory(); // 画面更新
+    }
+  } catch (error) {
+    showMessage('エラーが発生しました', 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function fetchHistory() {
+  try {
+    const response = await fetch(GAS_URL);
+    const data = await response.json();
+    
+    currentAllStatus = data.allStatus; // 状態を保存
+
+    // ダッシュボードの更新
+    updateDashboard('list-present', 'count-present', data.present);
+    updateDashboard('list-temp', 'count-temp', data.tempOut);
+
+    // 履歴の更新（直近3件）
+    const historyList = document.getElementById('history-list');
+    historyList.innerHTML = '';
+    data.history.forEach(item => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span>${item.time} ${item.name}</span><span class="status-badge" style="color:${getStatusColor(item.status)}">${item.status}</span>`;
+      historyList.appendChild(li);
+    });
+  } catch (e) { console.error(e); }
+}
+
+function updateDashboard(listId, countId, members) {
+  const listEl = document.getElementById(listId);
+  document.getElementById(countId).textContent = members.length;
+  listEl.innerHTML = members.map(m => `<span class="member-tag">${m}</span>`).join('');
+}
