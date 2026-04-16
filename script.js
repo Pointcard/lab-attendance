@@ -163,5 +163,5 @@ async function fetchHistory() {
 function updateDashboard(listId, countId, members) {
   const listEl = document.getElementById(listId);
   document.getElementById(countId).textContent = members.length;
-  listEl.innerHTML = members.map(m => `<span class="member-tag">${m}</span>`).join('');
+  listEl.innerHTML = members.map(m => `<li>${m}</li>`).join('');
 }
